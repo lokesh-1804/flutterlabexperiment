@@ -1,0 +1,56 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+void main() => runApp(MaterialApp(home: MyApp()));
+
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  TextEditingController city = TextEditingController();
+  String result = "";
+
+  void getWeather() async {
+    var url = Uri.parse(
+        "https://geocoding-api.open-meteo.com/v1/search?name=${city.text}&count=1");
+
+    var res = await http.get(url);
+    var data = jsonDecode(res.body);
+    var place = data['results'][0];
+
+    var url2 = Uri.parse(
+        "https://api.open-meteo.com/v1/forecast?latitude=${place['latitude']}&longitude=${place['longitude']}&current=temperature_2m");
+
+    var res2 = await http.get(url2);
+    var weather = jsonDecode(res2.body);
+
+    setState(() {
+      result = "Location: ${place['name']}\n"
+          "Temperature: ${weather['current']['temperature_2m']} °C";
+    });
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Weather App")),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextField(
+            controller: city,
+            decoration: InputDecoration(hintText: "Enter City Name"),
+          ),
+          ElevatedButton(
+            onPressed: getWeather,
+            child: Text("Get Weather"),
+          ),
+          Text(result),
+        ],
+      ),
+    );
+  }
+}
